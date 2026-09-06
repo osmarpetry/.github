@@ -25,18 +25,19 @@ jobs:
       - name: Detect toolchain
         id: d
         run: |
+          # Ordem = lockfiles que o Dependabot mantem primeiro. bun.lock fica por ultimo
+          # e sem --frozen-lockfile: o Dependabot atualiza package.json sem regravar ele.
           if   [ -f pnpm-lock.yaml ]; then pm=pnpm; install="pnpm install --frozen-lockfile"
-          elif [ -f bun.lock ] || [ -f bun.lockb ]; then pm=bun; install="bun install --frozen-lockfile"
           elif [ -f yarn.lock ]; then
             pm=yarn
             if [ -f .yarnrc.yml ]; then install="yarn install --immutable"
             else install="yarn install --frozen-lockfile"; fi
           elif [ -f package-lock.json ]; then pm=npm; install="npm ci"
+          elif [ -f bun.lock ] || [ -f bun.lockb ]; then pm=bun; install="bun install"
           else pm=npm; install="npm install"; fi
 
           cache=$pm
-          [ "$pm" = bun ] && cache=""
-          [ "$install" = "npm install" ] && cache=""
+          case "$install" in "bun install"|"npm install") cache="" ;; esac
 
           if [ -f .nvmrc ]; then node="$(tr -dc '0-9.' < .nvmrc)"; else node="${{ inputs.node-version }}"; fi
 
