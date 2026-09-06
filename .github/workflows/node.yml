@@ -27,17 +27,23 @@ jobs:
         run: |
           # Ordem = lockfiles que o Dependabot mantem primeiro. bun.lock fica por ultimo
           # e sem --frozen-lockfile: o Dependabot atualiza package.json sem regravar ele.
-          if   [ -f pnpm-lock.yaml ]; then pm=pnpm; install="pnpm install --frozen-lockfile"
+          if   [ -f pnpm-lock.yaml ]; then pm=pnpm; lock=pnpm-lock.yaml; install="pnpm install --frozen-lockfile"
           elif [ -f yarn.lock ]; then
-            pm=yarn
+            pm=yarn; lock=yarn.lock
             if [ -f .yarnrc.yml ]; then install="yarn install --immutable"
             else install="yarn install --frozen-lockfile"; fi
-          elif [ -f package-lock.json ]; then pm=npm; install="npm ci"
-          elif [ -f bun.lock ] || [ -f bun.lockb ]; then pm=bun; install="bun install"
-          else pm=npm; install="npm install"; fi
+          elif [ -f package-lock.json ]; then pm=npm; lock=package-lock.json; install="npm ci"
+          elif [ -f bun.lock ]; then pm=bun; lock=bun.lock; install="bun install"
+          elif [ -f bun.lockb ]; then pm=bun; lock=bun.lockb; install="bun install"
+          else pm=npm; lock=""; install="npm install"; fi
 
           cache=$pm
           case "$install" in "bun install"|"npm install") cache="" ;; esac
+
+          # o setub-node trata cache-dependency-path como glob: apontar para o
+          # lockfile exato, nunca para o diretorio
+          lockpath=""
+          [ -n "$cache" ] && lockpath="${{ inputs.working-directory }}/$lock"
 
           if [ -f .nvmrc ]; then node="$(tr -dc '0-9.' < .nvmrc)"; else node="${{ inputs.node-version }}"; fi
 
@@ -50,6 +56,7 @@ jobs:
             echo "cache=$cache"
             echo "node=$node"
             echo "pnpmv=$pnpmv"
+            echo "lockpath=$lockpath"
           } >> "$GITHUB_OUTPUT"
 
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -64,7 +71,7 @@ jobs:
         with:
           node-version: ${{ steps.d.outputs.node }}
           cache: ${{ steps.d.outputs.cache }}
-          cache-dependency-path: ${{ inputs.working-directory }}
+          cache-dependency-path: ${{ steps.d.outputs.lockpath }}
 
       - name: Install
         run: ${{ steps.d.outputs.install }}
