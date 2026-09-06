@@ -14,12 +14,10 @@ jobs:
       - uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          gh pr review --approve "$PR_URL"
-          # --auto exige auto-merge habilitado no repo (nao existe em repo privado
-          # fora do plano pago). O job so roda depois do build verde, entao cair
-          # para merge imediato tem o mesmo efeito.
-          gh pr merge --squash --auto "$PR_URL" || gh pr merge --squash "$PR_URL"
+      # Sem branch protection exigindo review nestes repos: o job so roda apos o
+      # build (needs: [build]) ja ter passado, entao merge direto e suficiente.
+      # Nao aprovar PR evita depender da config can_approve_pull_request_reviews.
+      - run: gh pr merge --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
