@@ -16,7 +16,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           gh pr review --approve "$PR_URL"
-          gh pr merge --squash --auto "$PR_URL"
+          # --auto exige auto-merge habilitado no repo (nao existe em repo privado
+          # fora do plano pago). O job so roda depois do build verde, entao cair
+          # para merge imediato tem o mesmo efeito.
+          gh pr merge --squash --auto "$PR_URL" || gh pr merge --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
