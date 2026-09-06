@@ -40,7 +40,7 @@ jobs:
           cache=$pm
           case "$install" in "bun install"|"npm install") cache="" ;; esac
 
-          # o setub-node trata cache-dependency-path como glob: apontar para o
+          # o setup-node trata cache-dependency-path como glob: apontar para o
           # lockfile exato, nunca para o diretorio
           lockpath=""
           [ -n "$cache" ] && lockpath="${{ inputs.working-directory }}/$lock"
