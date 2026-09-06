@@ -71,7 +71,8 @@ jobs:
 
       - name: Verify
         run: |
-          has() { node -e "process.exit((require('./package.json').scripts||{})['$1'] ? 0 : 1)"; }
+          # placeholder do `npm init` nao e teste; tratar como script inexistente
+          has() { node -e "const v=(require('./package.json').scripts||{})['$1']; process.exit(v && !/no test specified/.test(v) ? 0 : 1)"; }
           run() { if has "$1"; then echo "::group::$1"; ${{ steps.d.outputs.pm }} run "$1"; echo "::endgroup::"; fi; }
 
           run lint
