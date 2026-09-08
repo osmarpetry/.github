@@ -25,8 +25,8 @@ jobs:
       - name: Detect toolchain
         id: d
         run: |
-          # Ordem = lockfiles que o Dependabot mantem primeiro. bun.lock fica por ultimo
-          # e sem --frozen-lockfile: o Dependabot atualiza package.json sem regravar ele.
+          # Order = lockfiles Dependabot maintains first. bun.lock comes last
+          # and without --frozen-lockfile: Dependabot updates package.json without rewriting it.
           if   [ -f pnpm-lock.yaml ]; then pm=pnpm; lock=pnpm-lock.yaml; install="pnpm install --frozen-lockfile"
           elif [ -f yarn.lock ]; then
             pm=yarn; lock=yarn.lock
@@ -40,14 +40,14 @@ jobs:
           cache=$pm
           case "$install" in "bun install"|"npm install") cache="" ;; esac
 
-          # o setup-node trata cache-dependency-path como glob: apontar para o
-          # lockfile exato, nunca para o diretorio
+          # setup-node treats cache-dependency-path as a glob: point it at the
+          # exact lockfile, never at the directory
           lockpath=""
           [ -n "$cache" ] && lockpath="${{ inputs.working-directory }}/$lock"
 
           if [ -f .nvmrc ]; then node="$(tr -dc '0-9.' < .nvmrc)"; else node="${{ inputs.node-version }}"; fi
 
-          # pnpm/action-setup exige uma versao quando o package.json nao traz packageManager
+          # pnpm/action-setup requires a version when package.json has no packageManager field
           pnpmv=$(node -p "const p=require('./package.json');(p.packageManager||'').startsWith('pnpm@')?p.packageManager.slice(5):((p.engines||{}).pnpm||'latest')" 2>/dev/null || echo latest)
 
           {
@@ -78,7 +78,7 @@ jobs:
 
       - name: Verify
         run: |
-          # placeholder do `npm init` nao e teste; tratar como script inexistente
+          # npm init's placeholder isn't a real test; treat it as a missing script
           has() { node -e "const v=(require('./package.json').scripts||{})['$1']; process.exit(v && !/no test specified/.test(v) ? 0 : 1)"; }
           run() { if has "$1"; then echo "::group::$1"; ${{ steps.d.outputs.pm }} run "$1"; echo "::endgroup::"; fi; }
 

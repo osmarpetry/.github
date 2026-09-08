@@ -14,9 +14,9 @@ jobs:
       - uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      # Sem branch protection exigindo review nestes repos: o job so roda apos o
-      # build (needs: [build]) ja ter passado, entao merge direto e suficiente.
-      # Nao aprovar PR evita depender da config can_approve_pull_request_reviews.
+      # No branch protection requiring review on these repos: this job only runs after
+      # build (needs: [build]) already passed, so a direct merge is enough.
+      # Not approving the PR avoids depending on the can_approve_pull_request_reviews setting.
       - run: gh pr merge --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}

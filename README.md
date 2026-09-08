@@ -1,12 +1,13 @@
 # .github
 
-Workflows compartilhados de todos os repos de [@osmarpetry](https://github.com/osmarpetry).
+Shared workflows for all [@osmarpetry](https://github.com/osmarpetry) repos.
 
-Política única, um lugar só: dependência abre PR, CI roda, verde faz squash-merge sozinho.
+One policy, one place: a dependency opens a PR, CI runs, green squash-merges itself.
 
-## Uso
+## Usage (this org)
 
-`.github/workflows/ci.yml` no repo consumidor:
+This repo is public, so any repo can call it directly. Add `.github/workflows/ci.yml`
+to the consumer repo:
 
 ```yaml
 name: ci
@@ -33,13 +34,30 @@ jobs:
     uses: osmarpetry/.github/.github/workflows/dependabot-automerge.yml@main
 ```
 
+`needs: [build]` is what makes automerge wait for CI — never call `dependabot-automerge.yml` without it.
+
 ## Workflows
 
-| Workflow | O que faz |
+| Workflow | What it does |
 | --- | --- |
-| `node.yml` | Detecta pnpm/bun/yarn/npm pelo lockfile e a versão do Node pelo `.nvmrc`; instala com lockfile congelado e roda `lint`, `typecheck`/`type-check`, `test:ci` ou `test`, `build` — cada um só se o script existir. |
+| `node.yml` | Detects pnpm/bun/yarn/npm from the lockfile and the Node version from `.nvmrc`; installs with a frozen lockfile and runs `lint`, `typecheck`/`type-check`, `test:ci` or `test`, `build` — each only if the script exists. |
 | `go.yml` | `go build ./...` + `go test ./...` |
 | `maven.yml` | `mvn -B verify` |
-| `dependabot-automerge.yml` | Aprova e agenda squash-merge de PR do `dependabot[bot]`. Sempre com `needs:` no build. |
+| `dependabot-automerge.yml` | Squash-merges a `dependabot[bot]` PR. Always call it with `needs:` on the build job. |
 
-Actions de terceiros são fixadas por SHA completo, com a tag em comentário. O Dependabot atualiza os SHAs semanalmente.
+Third-party actions are pinned by full SHA, tag in a comment. Dependabot bumps the SHAs weekly.
+
+## Using this in a private org (e.g. a company repo)
+
+Same workflows, different host repo — you can't call `osmarpetry/.github` from
+somewhere it has no business being called from.
+
+1. Copy `.github/workflows/*.yml` into a shared repo in that org, e.g. `<org>/.github`.
+2. If that repo is **private**: repo Settings → Actions → General → *Access*, select
+   "Accessible from repositories in the '\<org\>' organization", Save. Public repos
+   need no such step.
+3. Point consumer repos' `uses:` at `<org>/.github/.github/workflows/node.yml@main`
+   instead of `osmarpetry/...`.
+
+No `secrets: inherit` needed — the only secret used is the default `GITHUB_TOKEN`,
+scoped per job via `permissions:`.
